@@ -24,8 +24,10 @@ namespace DataAcquisitor.DataAcquisitionServices
         private bool _isProcessInProgress = true;
         private bool _shouldListen = true;
         public int FramesCount = 0;
+        public int LostFramesCount = 0;
 
         public event EventHandler FrameCountChanged;
+        public event EventHandler LostFramesCountChanged;
 
 
         public void StartConnection()
@@ -92,9 +94,14 @@ namespace DataAcquisitor.DataAcquisitionServices
                             var frameBytes = packet.ToList().Skip(i * 136).Take(136).ToList();
                             var measurementFrame = new MeasurementFrame(frameBytes.ToArray());
                             framesList.Add(measurementFrame);
-
+                            if (FramesCount != measurementFrame.Counter - 1)
+                            {
+                                var framesDiff = measurementFrame.Counter - FramesCount + 1;
+                                LostFramesCount += framesDiff;
+                                LostFramesCountChanged.Invoke(this, new FramesCountChangesArgs(LostFramesCount));
+                            }
                             FramesCount = measurementFrame.Counter;
-                            FrameCountChanged.Invoke(this, EventArgs.);
+                            FrameCountChanged.Invoke(this, new FramesCountChangesArgs(FramesCount));
                             Debug.Write("Added frame with length: " + packet.Length);
                         }
                     }
@@ -133,5 +140,15 @@ namespace DataAcquisitor.DataAcquisitionServices
             }
             return _instance;
         }
+    }
+}
+
+public class FramesCountChangesArgs : EventArgs
+{
+    public int Count { get; set; }
+
+    public FramesCountChangesArgs(int count)
+    {
+        Count = count;
     }
 }

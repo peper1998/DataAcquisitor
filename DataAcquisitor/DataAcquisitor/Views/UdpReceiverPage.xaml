@@ -9,10 +9,31 @@
     </ContentPage.BindingContext>
 
     <StackLayout>
-        <Frame BackgroundColor="#2196F3" Padding="24" CornerRadius="0">
-            <Label BindingContext="{x:Binding Path=FramesCount}" Text="{Binding FramesCount, StringFormat='Frames Count: {0:F0}'}" HorizontalTextAlignment="Center" TextColor="White" FontSize="36"/>
+        <Frame BackgroundColor="#0b3948" Padding="10"  Margin="0, 20, 0, 0"  CornerRadius="0">
+            <Label Text="{Binding FramesCount, StringFormat='Frames Count: {0:F0}'}" HorizontalTextAlignment="Center" TextColor="White" FontSize="26"/>
         </Frame>
-        <Button Text="Start mesurement" Command="{Binding StartRecieving}"></Button>
-        <Button Text="Stop mesurement" Command="{Binding StopRecieving}"></Button>
+        
+        <Frame BackgroundColor="#0b3948" Padding="10" Margin="0, 20, 0, 30" CornerRadius="0">
+            <Label Text="{Binding LostFramesCount, StringFormat='Lost Frames Count: {0:F0}'}" HorizontalTextAlignment="Center" TextColor="White" FontSize="26"/>
+        </Frame>
+        
+        <StackLayout BackgroundColor="#0b3948" Padding="10" Margin="20, 20, 20, 30" Orientation="Horizontal" HorizontalOptions="FillAndExpand">
+            <CheckBox  IsChecked="{Binding IsTimerModeSelected, Mode=TwoWay}"  VerticalOptions="Start"/>
+            <Label Text="Timer mode" HorizontalTextAlignment="Center" TextColor="White" FontSize="26" HorizontalOptions="Center"/>
+        </StackLayout>
+        
+        <StackLayout BackgroundColor="#0b3948" Padding="10" Margin="20, 20, 20, 30" Orientation="Vertical">
+            <Label
+               Text="Measurement time"
+               FontSize="Large"
+                TextColor="White"
+               HorizontalOptions="Center"
+               VerticalOptions="CenterAndExpand" />
+            <Slider Maximum="60" Value="{Binding MeasurementTime,Mode=TwoWay}" IsEnabled="{Binding IsTimerModeSelected}"/>
+            <Label Text="{Binding MeasurementTime, StringFormat='{0:F0} minutes'}" TextColor="White" HorizontalTextAlignment="Center"  />
+        </StackLayout>
+        
+        <Button Text="Start mesurement" BackgroundColor="#416165" TextColor="White" Margin="20" Command="{Binding StartRecieving}"></Button>
+        <Button Text="Stop mesurement" BackgroundColor="#416165" TextColor="White" Margin="20" Command="{Binding StopRecieving}"></Button>
     </StackLayout>
 </ContentPage>

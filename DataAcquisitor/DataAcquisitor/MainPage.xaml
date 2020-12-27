@@ -8,10 +8,10 @@
         <local:MainPageViewModel/>
     </ContentPage.BindingContext>
     <StackLayout>
-        <Frame BackgroundColor="#2196F3" Padding="24" CornerRadius="0">
-            <Label Text="Welcome to Xamarin.Forms!" HorizontalTextAlignment="Center" TextColor="White" FontSize="36"/>
+        <Frame BackgroundColor="#0b3948" Padding="24" CornerRadius="0">
+            <Label Text="DATA ACQUISITOR" HorizontalTextAlignment="Center" TextColor="White" FontSize="36" FontAttributes="Bold"/>
         </Frame>
-        <Button Text="Go to UDP" Command="{Binding GoToPackedReciever}"></Button>
+        <Button BackgroundColor="#0b3948" TextColor="White" Padding="10" Margin="0, 20, 0, 30" Text="Go to measurement page" Command="{Binding GoToPackedReciever}"></Button>
         
     </StackLayout>
 
