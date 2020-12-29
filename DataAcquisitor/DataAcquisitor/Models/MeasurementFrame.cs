@@ -6,10 +6,10 @@ namespace DataAcquisitor.Models
     public class MeasurementFrame
     {
         public ushort Counter { get; set; }
-        List<ushort> Values { get; set; }
-        byte[] MeasurementValue { get; set; }
-        byte Mpx { get; set; }
-        byte Separator { get; set; }
+        public List<ushort> Values { get; set; }
+        public List<byte> MeasurementValue { get; set; }
+        public byte Mpx { get; set; }
+        public byte Separator { get; set; }
 
         public MeasurementFrame(byte[] bytes)
         {
@@ -20,7 +20,7 @@ namespace DataAcquisitor.Models
             }
 
             Counter = BitConverter.ToUInt16(bytes, 128);
-            MeasurementValue = new byte[] { bytes[130], bytes[131], bytes[132], bytes[133] };
+            MeasurementValue = new List<byte> { bytes[130], bytes[131], bytes[132], bytes[133] };
             Mpx = bytes[134];
             Separator = bytes[135];
         }

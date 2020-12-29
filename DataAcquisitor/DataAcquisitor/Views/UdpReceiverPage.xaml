@@ -9,16 +9,15 @@
     </ContentPage.BindingContext>
 
     <StackLayout>
-        <Frame BackgroundColor="#0b3948" Padding="10"  Margin="0, 20, 0, 0"  CornerRadius="0">
-            <Label Text="{Binding FramesCount, StringFormat='Frames Count: {0:F0}'}" HorizontalTextAlignment="Center" TextColor="White" FontSize="26"/>
-        </Frame>
-        
-        <Frame BackgroundColor="#0b3948" Padding="10" Margin="0, 20, 0, 30" CornerRadius="0">
-            <Label Text="{Binding LostFramesCount, StringFormat='Lost Frames Count: {0:F0}'}" HorizontalTextAlignment="Center" TextColor="White" FontSize="26"/>
-        </Frame>
-        
+
+        <Label Text="{Binding MeasurementTimerValue, StringFormat='{}{0:mm}:{0:ss}'}" HorizontalTextAlignment="Center" BackgroundColor="#0b3948" TextColor="White" FontSize="26"/>
+
+        <Label Text="{Binding FramesCount, StringFormat='Frames Count: {0:F0}'}" HorizontalTextAlignment="Center" BackgroundColor="#0b3948" TextColor="White" FontSize="26"/>
+
+        <Label Text="{Binding LostFramesCount, StringFormat='Lost Frames Count: {0:F0}'}" HorizontalTextAlignment="Center" BackgroundColor="#0b3948" TextColor="White" FontSize="26"/>
+
         <StackLayout BackgroundColor="#0b3948" Padding="10" Margin="20, 20, 20, 30" Orientation="Horizontal" HorizontalOptions="FillAndExpand">
-            <CheckBox  IsChecked="{Binding IsTimerModeSelected, Mode=TwoWay}"  VerticalOptions="Start"/>
+            <CheckBox  IsChecked="{Binding IsTimerModeSelected, Mode=TwoWay}" IsEnabled="{Binding EnableStartMeasurementButton}"  VerticalOptions="Start"/>
             <Label Text="Timer mode" HorizontalTextAlignment="Center" TextColor="White" FontSize="26" HorizontalOptions="Center"/>
         </StackLayout>
         
@@ -26,14 +25,14 @@
             <Label
                Text="Measurement time"
                FontSize="Large"
-                TextColor="White"
+               TextColor="White"
                HorizontalOptions="Center"
                VerticalOptions="CenterAndExpand" />
-            <Slider Maximum="60" Value="{Binding MeasurementTime,Mode=TwoWay}" IsEnabled="{Binding IsTimerModeSelected}"/>
+            <Slider Maximum="60" Value="{Binding MeasurementTime,Mode=TwoWay}" IsEnabled="{Binding EnableSlider}"/>
             <Label Text="{Binding MeasurementTime, StringFormat='{0:F0} minutes'}" TextColor="White" HorizontalTextAlignment="Center"  />
         </StackLayout>
-        
-        <Button Text="Start mesurement" BackgroundColor="#416165" TextColor="White" Margin="20" Command="{Binding StartRecieving}"></Button>
+
+        <Button Text="Start mesurement" BackgroundColor="#416165" TextColor="White" Margin="20" Command="{Binding StartRecieving}" IsEnabled="{Binding EnableStartMeasurementButton}"></Button>
         <Button Text="Stop mesurement" BackgroundColor="#416165" TextColor="White" Margin="20" Command="{Binding StopRecieving}"></Button>
     </StackLayout>
 </ContentPage>

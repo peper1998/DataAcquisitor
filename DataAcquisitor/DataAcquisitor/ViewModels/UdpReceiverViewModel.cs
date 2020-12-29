@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Reactive;
 using System.Reactive.Linq;
+using System.Threading.Tasks;
 using DataAcquisitor.DataAcquisitionServices;
 using Xamarin.Forms;
 
@@ -17,6 +18,14 @@ namespace DataAcquisitor.ViewModels
             StartRecieving = new Command(async () =>
             {
                 _deviceClient.StartConnection();
+
+                StartTimer();
+
+                if (isTimerModeSelected)
+                {
+                    Task.Delay(new TimeSpan(0, measurementTime, 0)).ContinueWith(o => { _deviceClient.StopDataStream(); });
+                }
+
                 Debug.Write("start");
 
             });
@@ -26,13 +35,17 @@ namespace DataAcquisitor.ViewModels
                 _deviceClient.StopDataStream();
             });
 
-            _framesCountChangedEventAsObservable = Observable.FromEventPattern(ev => _deviceClient.FrameCountChanged += ev,
-                                                                                    ev => _deviceClient.FrameCountChanged -= ev);
-            _framesCountChangedEventAsObservable.Subscribe(x => FramesCount = ((FramesCountChangesArgs)x.EventArgs).Count);
+            //_framesCountChangedEventAsObservable = Observable.FromEventPattern(ev => _deviceClient.FrameCountChanged += ev,
+            //                                                                        ev => _deviceClient.FrameCountChanged -= ev);
+            //_framesCountChangedEventAsObservable.Subscribe(x => FramesCount = ((FramesCountChangesArgs)x.EventArgs).Count);
 
-            _lostFramesCountChangedEventAsObservable = Observable.FromEventPattern(ev => _deviceClient.LostFramesCountChanged += ev,
-                                                                                    ev => _deviceClient.LostFramesCountChanged -= ev);
-            _lostFramesCountChangedEventAsObservable.Subscribe(x => FramesCount = ((FramesCountChangesArgs)x.EventArgs).Count);
+            //_lostFramesCountChangedEventAsObservable = Observable.FromEventPattern(ev => _deviceClient.LostFramesCountChanged += ev,
+            //                                                                        ev => _deviceClient.LostFramesCountChanged -= ev);
+            //_lostFramesCountChangedEventAsObservable.Subscribe(x => FramesCount = ((FramesCountChangesArgs)x.EventArgs).Count);
+
+            _isProcessInProgressChangedEventAsObservable = Observable.FromEventPattern(ev => _deviceClient.IsProcessInProgressChanged += ev,
+                                                                                    ev => _deviceClient.IsProcessInProgressChanged -= ev);
+            _isProcessInProgressChangedEventAsObservable.Subscribe(x => IsProcessInProgress = ((IsProcessInProgressChangedArgs)x.EventArgs).IsInProgress);
         }
 
         public UdpReceiverViewModel()
@@ -44,6 +57,7 @@ namespace DataAcquisitor.ViewModels
 
         private IObservable<EventPattern<object>> _framesCountChangedEventAsObservable;
         private IObservable<EventPattern<object>> _lostFramesCountChangedEventAsObservable;
+        private IObservable<EventPattern<object>> _isProcessInProgressChangedEventAsObservable;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -87,6 +101,7 @@ namespace DataAcquisitor.ViewModels
                     isTimerModeSelected = value;
 
                     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsTimerModeSelected)));
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(EnableSlider)));
                 }
             }
             get => isTimerModeSelected;
@@ -104,6 +119,60 @@ namespace DataAcquisitor.ViewModels
                 }
             }
             get => measurementTime;
+        }
+
+        public long measurementTimeInSecs = 0;
+        public void StartTimer()
+        {
+            measurementTimeInSecs = 0;
+            Device.StartTimer(TimeSpan.FromSeconds(1), () =>
+            {
+                measurementTimeInSecs++;
+                MeasurementTimerValue = TimeSpan.FromSeconds(measurementTimeInSecs);
+                FramesCount = _deviceClient.FramesCount;
+                LostFramesCount = _deviceClient.LostFramesCount;
+                return _deviceClient.IsProcessInProgress;
+            });
+        }
+
+        private TimeSpan measurementTimerValue;
+        public TimeSpan MeasurementTimerValue
+        {
+            set
+            {
+                if (measurementTimerValue != value)
+                {
+                    measurementTimerValue = value;
+
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(MeasurementTimerValue)));
+                }
+            }
+            get => measurementTimerValue;
+        }
+        private bool isProcessInProgress;
+        public bool IsProcessInProgress
+        {
+            set
+            {
+                if (isProcessInProgress != value)
+                {
+                    isProcessInProgress = value;
+
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsProcessInProgress)));
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(EnableStartMeasurementButton)));
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(EnableSlider)));
+                }
+            }
+            get => isProcessInProgress;
+        }
+        public bool EnableStartMeasurementButton
+        {
+            get => !IsProcessInProgress;
+        }
+
+        public bool EnableSlider
+        {
+            get => !IsProcessInProgress && IsTimerModeSelected;
         }
     }
 }
