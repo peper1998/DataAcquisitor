@@ -7,15 +7,25 @@ namespace DataAcquisitor.ViewModels
     {
         public MainPageViewModel()
         {
-            GoToPackedReciever = new Command(async () =>
+            GoToPacketReciever = new Command(async () =>
             {
-                var udpVM = new UdpReceiverViewModel("Dupa");
-                var udpPage = new UdpReceiverPage();
-                udpPage.BindingContext = udpVM;
-                await Application.Current.MainPage.Navigation.PushAsync(udpPage);
+                var viewModel = new UdpReceiverViewModel("Dupa");
+                var page = new UdpReceiverPage();
+                page.BindingContext = viewModel;
+                await Application.Current.MainPage.Navigation.PushAsync(page);
             });
+
+            GoToFilesList = new Command(async () =>
+             {
+                 var viewModel = new MeasurementFilesViewModel();
+                 var page = new MeasurementFilesListPage();
+                 page.BindingContext = viewModel;
+                 await Application.Current.MainPage.Navigation.PushAsync(page);
+             });
+
         }
 
-        public Command GoToPackedReciever { get; }
+        public Command GoToPacketReciever { get; }
+        public Command GoToFilesList { get; }
     }
 }

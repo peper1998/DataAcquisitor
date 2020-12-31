@@ -21,40 +21,31 @@ namespace DataAcquisitor.DataAcquisitionServices
         private UdpClient _listener = new UdpClient(new IPEndPoint(IPAddress.Any, 2000));
 
         Task ListenerTask;
-        Task ProcesserTask;
 
         private CancellationTokenSource _listenerCancellationTokenSource;
 
-        Queue<byte[]> packetsBuffer = new Queue<byte[]>();
-        List<byte> bytesList = new List<byte>();
-        private bool _isProcessInProgress = true;
         private bool _shouldListen = true;
         public int FramesCount = 0;
         public int LostFramesCount = 0;
         public int LastFramesCount = 0;
 
+        public bool IsProcessInProgress = false;
+
         IFilesStorageService _filesStorageService;
 
-        public event EventHandler FrameCountChanged;
-        public event EventHandler LostFramesCountChanged;
-        public event EventHandler IsProcessInProgressChanged;
+        public event EventHandler FileSavedEvent;
 
+        public List<MeasurementFrame> FramesList = new List<MeasurementFrame>();
 
         public void StartConnection()
         {
             _shouldListen = true;
             IsProcessInProgress = true;
-
             if (ListenerTask == null)
             {
                 _listenerCancellationTokenSource = new CancellationTokenSource();
                 ListenerTask = Task.Run(() => ListenForMeasurements(_listener, _device), _listenerCancellationTokenSource.Token);
             }
-
-            //if (ProcesserTask == null)
-            //{
-            //    ProcesserTask = Task.Run(() => ProcessData());
-            //}
 
             s.SendTo(CommunicationCommands.DATA_ON, _device);
             Task.Delay(200);
@@ -79,134 +70,91 @@ namespace DataAcquisitor.DataAcquisitionServices
 
         private async Task ListenForMeasurements(UdpClient listener, IPEndPoint endpoint)
         {
-            var framesList = new List<MeasurementFrame>();
+            var packetsList = new List<byte[]>();
             while (_shouldListen)
             {
                 byte[] bytes = listener.Receive(ref endpoint);
-                Debug.Write(bytes.Length);
-                packetsBuffer.Enqueue(bytes);
-                if (packetsBuffer.Count > 0)
+                packetsList.Add(bytes);
+                Debug.Write(packetsList.Count);
+
+                if (packetsList.Count > 100)
                 {
-                    var packet = bytes; 
-                    // Debug.Write(packet.Length);
-                    if (packet.Length == 272 || packet.Length == 408)
-                    {
-                        int framesCount = packet.Length / 136;
-                        for (int i = 0; i < framesCount; i++)
-                        {
-                            var frameBytes = packet.ToList().Skip(i * 136).Take(136).ToList();
-                            var measurementFrame = new MeasurementFrame(frameBytes.ToArray());
-                            framesList.Add(measurementFrame);
-                            //Debug.Write(measurementFrame.Counter);
-
-                            if (LastFramesCount != measurementFrame.Counter - 1)
-                            {
-                                var framesDiff = measurementFrame.Counter - LastFramesCount + 1;
-                                LostFramesCount += framesDiff;
-                            }
-
-                            LastFramesCount = measurementFrame.Counter;
-                            FramesCount = measurementFrame.Counter;
-                            // Debug.Write("Added frame with length: " + packet.Length);
-                        }
-                    }
-                    else
-                    {
-                        if (packet[0] == '*' && packet[1] == '*' && packet[2] == '*' && packet[3] == '*')
-                        {
-                            int framesCount = packet.Length / 136;
-                            var clearedPacket = packet.Skip(4);
-                            for (int i = 0; i < framesCount; i++)
-                            {
-                                var frameBytes = clearedPacket.ToList().Skip(i * 136).Take(136).ToList();
-                                framesList.Add(new MeasurementFrame(frameBytes.ToArray()));
-                                //Debug.Write("Added frame with lengthh: " + packet.Length);
-                            }
-                        }
-
-                        if (packet[0] == '#' && packet[1] == '#' && packet[2] == '#' && packet[3] == '#')
-                        {
-                            break;
-                        }
-                    }
+                    ProcessPackets(packetsList);
+                    packetsList = new List<byte[]>();
                 }
             }
-            var measurementsJson = JsonConvert.SerializeObject(framesList);
+            ProcessPackets(new List<byte[]>(packetsList));
+
+            var measurementsJson = JsonConvert.SerializeObject(FramesList);
             _filesStorageService.SaveFile(DateTime.Now.ToString("o") + "Measurements.txt", measurementsJson);
+            FileSavedEvent.Invoke(this, new FileSavedEventArgs(FramesList.Count));
             IsProcessInProgress = false;
         }
 
-        private async Task ProcessData()
+        private void ProcessPackets(List<byte[]> packets)
         {
-            var framesList = new List<MeasurementFrame>();
-            while (IsProcessInProgress)
+            foreach (var packet in packets)
             {
-                //if (packetsBuffer.Count > 0)
-                //{
-                //    var packet = packetsBuffer.Dequeue();
-                //    Debug.Write(packet.Length);
-                //    if (packet.Length == 272 || packet.Length == 408)
-                //    {
-                //        int framesCount = packet.Length / 136;
-                //        for (int i = 0; i < framesCount; i++)
-                //        {
-                //            var frameBytes = packet.ToList().Skip(i * 136).Take(136).ToList();
-                //            var measurementFrame = new MeasurementFrame(frameBytes.ToArray());
-                //            framesList.Add(measurementFrame);
-                //            Debug.Write(measurementFrame.Counter);
-
-                //            if (LastFramesCount != measurementFrame.Counter - 1)
-                //            {
-                //                var framesDiff = measurementFrame.Counter - LastFramesCount + 1;
-                //                LostFramesCount += framesDiff;
-                //            }
-
-                //            LastFramesCount = measurementFrame.Counter;
-                //            FramesCount = measurementFrame.Counter;
-                //            // Debug.Write("Added frame with length: " + packet.Length);
-                //        }
-                //    }
-                //    else
-                //    {
-                //        if (packet[0] == '*' && packet[1] == '*' && packet[2] == '*' && packet[3] == '*')
-                //        {
-                //            int framesCount = packet.Length / 136;
-                //            var clearedPacket = packet.Skip(4);
-                //            for (int i = 0; i < framesCount; i++)
-                //            {
-                //                var frameBytes = clearedPacket.ToList().Skip(i * 136).Take(136).ToList();
-                //                framesList.Add(new MeasurementFrame(frameBytes.ToArray()));
-                //                Debug.Write("Added frame with lengthh: " + packet.Length);
-                //            }
-                //        }
-
-                //        if (packet[0] == '#' && packet[1] == '#' && packet[2] == '#' && packet[3] == '#')
-                //        {
-                //            // koniec strumienia
-                //        }
-                //    }
-                //}
+                ProcessPacket(packet);
             }
-
-            var measurementsJson = JsonConvert.SerializeObject(framesList);
-            _filesStorageService.SaveFile(DateTime.Now.ToString("o") + "Measurements.txt", measurementsJson);
         }
 
-        public bool IsProcessInProgress
+        private void ProcessPacket(byte[] packet)
         {
-            set
+            var packetAsList = packet.ToList();
+            if (packetAsList.Count == 272 || packetAsList.Count == 408)
             {
-                _isProcessInProgress = value;
-                IsProcessInProgressChanged.Invoke(this, new IsProcessInProgressChangedArgs(_isProcessInProgress));
+                int framesCount = packetAsList.Count / 136;
+                for (int i = 0; i < framesCount; i++)
+                {
+                    var frameBytes = packetAsList.Skip(i * 136).Take(136).ToList();
+                    var measurementFrame = new MeasurementFrame(frameBytes.ToArray());
+                    FramesList.Add(measurementFrame);
+
+                    if (LastFramesCount != measurementFrame.Counter - 1)
+                    {
+                        var framesDiff = measurementFrame.Counter - LastFramesCount + 1;
+                        LostFramesCount += framesDiff;
+                    }
+
+                    LastFramesCount = measurementFrame.Counter;
+                    FramesCount = measurementFrame.Counter;
+                }
             }
-            get => _isProcessInProgress;
+            else
+            {
+                if (packet[0] == '*' && packet[1] == '*' && packet[2] == '*' && packet[3] == '*')
+                {
+                    int framesCount = packet.Length / 136;
+                    var clearedPacket = packet.Skip(4);
+                    for (int i = 0; i < framesCount; i++)
+                    {
+                        var frameBytes = clearedPacket.ToList().Skip(i * 136).Take(136).ToList();
+                        FramesList.Add(new MeasurementFrame(frameBytes.ToArray()));
+                    }
+                }
+
+                if (packet[0] == '#' && packet[1] == '#' && packet[2] == '#' && packet[3] == '#')
+                {
+                    int framesCount = packet.Length / 136;
+                    var clearedPacket = packet.Skip(4);
+                    for (int i = 0; i < framesCount; i++)
+                    {
+                        var frameBytes = clearedPacket.ToList().Skip(i * 136).Take(136).ToList();
+                        FramesList.Add(new MeasurementFrame(frameBytes.ToArray()));
+                    }
+                }
+            }
         }
+
         private DeviceClient()
         {
             _filesStorageService = DependencyService.Get<IFilesStorageService>();
         }
 
         private static DeviceClient _instance;
+
+        public Task ProcessingTask { get; private set; }
 
         public static DeviceClient GetInstance()
         {
@@ -219,22 +167,12 @@ namespace DataAcquisitor.DataAcquisitionServices
     }
 }
 
-public class FramesCountChangesArgs : EventArgs
+public class FileSavedEventArgs : EventArgs
 {
-    public int Count { get; set; }
+    public long FramesCount { get; set; }
 
-    public FramesCountChangesArgs(int count)
+    public FileSavedEventArgs(long framesCount)
     {
-        Count = count;
-    }
-}
-
-public class IsProcessInProgressChangedArgs : EventArgs
-{
-    public bool IsInProgress { get; set; }
-
-    public IsProcessInProgressChangedArgs(bool isInProgress)
-    {
-        IsInProgress = isInProgress;
+        FramesCount = framesCount;
     }
 }

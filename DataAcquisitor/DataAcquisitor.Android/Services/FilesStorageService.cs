@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using DataAcquisitor.Droid.Services;
 using DataAcquisitor.Services;
 using Xamarin.Forms;
@@ -18,8 +20,17 @@ namespace DataAcquisitor.Droid.Services
 
         private void CreateDirectoryIfNotExists()
         {
-            var ss = MeasurementsDirectoryPatsssh;
             Directory.CreateDirectory(MeasurementsDirectoryPath);
+        }
+
+        public List<string> GetMeasurementFiles()
+        {
+            return Directory.GetFiles(MeasurementsDirectoryPath).ToList();
+        }
+
+        public void DeleteFile(string path)
+        {
+            File.Delete(path);
         }
     }
 }

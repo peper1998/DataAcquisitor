@@ -35,17 +35,12 @@ namespace DataAcquisitor.ViewModels
                 _deviceClient.StopDataStream();
             });
 
-            //_framesCountChangedEventAsObservable = Observable.FromEventPattern(ev => _deviceClient.FrameCountChanged += ev,
-            //                                                                        ev => _deviceClient.FrameCountChanged -= ev);
-            //_framesCountChangedEventAsObservable.Subscribe(x => FramesCount = ((FramesCountChangesArgs)x.EventArgs).Count);
-
-            //_lostFramesCountChangedEventAsObservable = Observable.FromEventPattern(ev => _deviceClient.LostFramesCountChanged += ev,
-            //                                                                        ev => _deviceClient.LostFramesCountChanged -= ev);
-            //_lostFramesCountChangedEventAsObservable.Subscribe(x => FramesCount = ((FramesCountChangesArgs)x.EventArgs).Count);
-
-            _isProcessInProgressChangedEventAsObservable = Observable.FromEventPattern(ev => _deviceClient.IsProcessInProgressChanged += ev,
-                                                                                    ev => _deviceClient.IsProcessInProgressChanged -= ev);
-            _isProcessInProgressChangedEventAsObservable.Subscribe(x => IsProcessInProgress = ((IsProcessInProgressChangedArgs)x.EventArgs).IsInProgress);
+            _fileSavedEventAsObservable = Observable.FromEventPattern(ev => _deviceClient.FileSavedEvent += ev,
+                                                                                    ev => _deviceClient.FileSavedEvent -= ev);
+            _fileSavedEventAsObservable.Subscribe(async x => await Application.Current.MainPage.DisplayAlert(
+                "Process completed", ((FileSavedEventArgs)x.EventArgs).FramesCount + "frames has been processed and saved in file!",
+                "Ok")
+            );
         }
 
         public UdpReceiverViewModel()
@@ -57,7 +52,7 @@ namespace DataAcquisitor.ViewModels
 
         private IObservable<EventPattern<object>> _framesCountChangedEventAsObservable;
         private IObservable<EventPattern<object>> _lostFramesCountChangedEventAsObservable;
-        private IObservable<EventPattern<object>> _isProcessInProgressChangedEventAsObservable;
+        private IObservable<EventPattern<object>> _fileSavedEventAsObservable;
 
         public event PropertyChangedEventHandler PropertyChanged;
 

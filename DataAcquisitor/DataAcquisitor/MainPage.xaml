@@ -11,7 +11,8 @@
         <Frame BackgroundColor="#0b3948" Padding="24" CornerRadius="0">
             <Label Text="DATA ACQUISITOR" HorizontalTextAlignment="Center" TextColor="White" FontSize="36" FontAttributes="Bold"/>
         </Frame>
-        <Button BackgroundColor="#0b3948" TextColor="White" Padding="10" Margin="0, 20, 0, 30" Text="Go to measurement page" Command="{Binding GoToPackedReciever}"></Button>
+        <Button BackgroundColor="#0b3948" TextColor="White" Padding="10" Margin="0, 20, 0, 30" Text="Go to measurement page" Command="{Binding GoToPacketReciever}"></Button>
+        <Button BackgroundColor="#0b3948" TextColor="White" Padding="10" Margin="0, 20, 0, 30" Text="Files" Command="{Binding GoToFilesList}"></Button>
         
     </StackLayout>
 

@@ -14,7 +14,7 @@ namespace DataAcquisitor.Models
         public MeasurementFrame(byte[] bytes)
         {
             Values = new List<ushort>();
-            for (int i = 0; i < 126; i += 2)
+            for (int i = 0; i < 127; i += 2)
             {
                 Values.Add(BitConverter.ToUInt16(bytes, i));
             }
