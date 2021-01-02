@@ -22,5 +22,10 @@ namespace DataAcquisitor.iOS.Services
         {
             throw new System.NotImplementedException();
         }
+
+        public void SaveFile(string filename, byte[] content)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

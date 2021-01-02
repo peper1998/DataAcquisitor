@@ -5,6 +5,7 @@ using System.Reactive;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
 using DataAcquisitor.DataAcquisitionServices;
+using DataAcquisitor.Services;
 using Xamarin.Forms;
 
 namespace DataAcquisitor.ViewModels
@@ -12,6 +13,7 @@ namespace DataAcquisitor.ViewModels
     public class UdpReceiverViewModel : INotifyPropertyChanged
     {
         private DeviceClient _deviceClient = DeviceClient.GetInstance();
+        private IMessageService _messageService = DependencyService.Get<IMessageService>();
 
         public UdpReceiverViewModel(string v)
         {
@@ -37,10 +39,15 @@ namespace DataAcquisitor.ViewModels
 
             _fileSavedEventAsObservable = Observable.FromEventPattern(ev => _deviceClient.FileSavedEvent += ev,
                                                                                     ev => _deviceClient.FileSavedEvent -= ev);
-            _fileSavedEventAsObservable.Subscribe(async x => await Application.Current.MainPage.DisplayAlert(
-                "Process completed", ((FileSavedEventArgs)x.EventArgs).FramesCount + "frames has been processed and saved in file!",
-                "Ok")
-            );
+            _fileSavedEventAsObservable.Subscribe(_ =>
+            {
+                _messageService.ShortAlert("File saved!");
+                ResetViewModel();
+            });
+
+            _isProcessInProgressChangedEventAsObservable = Observable.FromEventPattern(ev => _deviceClient.IsProcessInProgressChangedEvent += ev,
+                                                                                    ev => _deviceClient.IsProcessInProgressChangedEvent -= ev);
+            _isProcessInProgressChangedEventAsObservable.Subscribe(e => IsProcessInProgress = ((IsProcessInProgressChangedEventArgs)(e.EventArgs)).IsInProgress);
         }
 
         public UdpReceiverViewModel()
@@ -50,25 +57,33 @@ namespace DataAcquisitor.ViewModels
         public Command StartRecieving { get; }
         public Command StopRecieving { get; }
 
-        private IObservable<EventPattern<object>> _framesCountChangedEventAsObservable;
-        private IObservable<EventPattern<object>> _lostFramesCountChangedEventAsObservable;
         private IObservable<EventPattern<object>> _fileSavedEventAsObservable;
+        private IObservable<EventPattern<object>> _isProcessInProgressChangedEventAsObservable;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private int framesCount;
-        public int FramesCount
+        private void ResetViewModel()
+        {
+            FramesCounter = 0;
+            LostFramesCount = 0;
+            MeasurementTimerValue = TimeSpan.FromSeconds(0);
+            MeasurementTime = 1;
+            IsTimerModeSelected = false;
+        }
+
+        private int framesCounter;
+        public int FramesCounter
         {
             set
             {
-                if (framesCount != value)
+                if (framesCounter != value)
                 {
-                    framesCount = value;
+                    framesCounter = value;
 
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(FramesCount)));
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(FramesCounter)));
                 }
             }
-            get => framesCount;
+            get => framesCounter;
         }
 
         private int lostFramesCount;
@@ -124,7 +139,7 @@ namespace DataAcquisitor.ViewModels
             {
                 measurementTimeInSecs++;
                 MeasurementTimerValue = TimeSpan.FromSeconds(measurementTimeInSecs);
-                FramesCount = _deviceClient.FramesCount;
+                FramesCounter = _deviceClient.FramesCounter;
                 LostFramesCount = _deviceClient.LostFramesCount;
                 return _deviceClient.IsProcessInProgress;
             });

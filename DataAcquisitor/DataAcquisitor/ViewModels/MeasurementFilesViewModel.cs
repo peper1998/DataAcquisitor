@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using DataAcquisitor.Models;
@@ -9,8 +10,10 @@ namespace DataAcquisitor.ViewModels
 {
     public class MeasurementFilesViewModel : INotifyPropertyChanged
     {
-        private IFilesStorageService _filesStorageService;
-        private IFilesSharingService _filesSharingService;
+        private IFilesStorageService _filesStorageService = DependencyService.Get<IFilesStorageService>();
+        private IFilesSharingService _filesSharingService = DependencyService.Get<IFilesSharingService>();
+        private IMessageService _messageService = DependencyService.Get<IMessageService>();
+
         private List<FileItem> _filesList;
         public List<FileItem> FilesList
         {
@@ -31,8 +34,6 @@ namespace DataAcquisitor.ViewModels
 
         public MeasurementFilesViewModel()
         {
-            _filesStorageService = DependencyService.Get<IFilesStorageService>();
-            _filesSharingService = DependencyService.Get<IFilesSharingService>();
             FilesList = _filesStorageService.GetMeasurementFiles().Select(f => new FileItem(f.Split('/').Last(), f)).ToList();
 
             ShareFile = new Command(async (file) =>
@@ -44,7 +45,15 @@ namespace DataAcquisitor.ViewModels
             DeleteFile = new Command((file) =>
             {
                 var fileToDelete = (file as FileItem);
-                _filesStorageService.DeleteFile(fileToDelete.Path);
+                try
+                {
+                    _filesStorageService.DeleteFile(fileToDelete.Path);
+                    _messageService.ShortAlert("File deleted");
+                }
+                catch (Exception)
+                {
+                    _messageService.ShortAlert("Error occured when deleting file!");
+                }
 
                 FilesList = _filesStorageService.GetMeasurementFiles().Select(f => new FileItem(f.Split('/').Last(), f)).ToList(); ;
             });

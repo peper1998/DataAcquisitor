@@ -12,7 +12,7 @@
 
         <Label Text="{Binding MeasurementTimerValue, StringFormat='{}{0:mm}:{0:ss}'}" HorizontalTextAlignment="Center" BackgroundColor="#0b3948" TextColor="White" FontSize="26"/>
 
-        <Label Text="{Binding FramesCount, StringFormat='Frames Count: {0:F0}'}" HorizontalTextAlignment="Center" BackgroundColor="#0b3948" TextColor="White" FontSize="26"/>
+        <Label Text="{Binding FramesCounter, StringFormat='Frames Counter: {0:F0}'}" HorizontalTextAlignment="Center" BackgroundColor="#0b3948" TextColor="White" FontSize="26"/>
 
         <Label Text="{Binding LostFramesCount, StringFormat='Lost Frames Count: {0:F0}'}" HorizontalTextAlignment="Center" BackgroundColor="#0b3948" TextColor="White" FontSize="26"/>
 
