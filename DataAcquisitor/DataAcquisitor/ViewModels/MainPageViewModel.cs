@@ -9,7 +9,7 @@ namespace DataAcquisitor.ViewModels
         {
             GoToPacketReciever = new Command(async () =>
             {
-                var viewModel = new UdpReceiverViewModel("Dupa");
+                var viewModel = new UdpReceiverViewModel("d");
                 var page = new UdpReceiverPage();
                 page.BindingContext = viewModel;
                 await Application.Current.MainPage.Navigation.PushAsync(page);
