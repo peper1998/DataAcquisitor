@@ -131,9 +131,11 @@ namespace DataAcquisitor.DataAcquisitionServices
 
         private void SaveMeasurementsInFile()
         {
-            var measurementsOutput = new List<byte>(new byte[4500]);
+            var header = "V3.05 WIFI-SOURCE       FR-L 2021-01-01 12.00.00 Projekt dyplomowy Measurements    1   TESTBAR           64  1000       1.00   0     0   ";
+            var zeros = new List<byte>(new byte[4500 - header.Length]);
+            var measurementsOutput = System.Text.Encoding.ASCII.GetBytes(header).ToList();
+            measurementsOutput.AddRange(zeros);
             measurementsOutput.AddRange(BasicFramesList.SelectMany(f => f.CounterBytes.Concat(f.Measurements).ToList()));
-
             var measurementsJson = JsonConvert.SerializeObject(FramesList);
             _filesStorageService.SaveFile(DateTime.Now.ToString("o") + "Measurements.txt", measurementsOutput.ToArray());
             FileSavedEvent.Invoke(this, new FileSavedEventArgs(FramesList.Count));
